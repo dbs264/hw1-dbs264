@@ -1,0 +1,209 @@
+<html>
+<head>
+    <title> Daniel Sanderson HW 1 </title>
+    <script src="https://d3js.org/d3.v6.min.js"></script>
+    <script src="https://d3js.org/topojson.v2.min.js"></script>
+
+    <style>
+
+    html{
+        text-align: center;
+    }
+
+      .city{
+          fill:  #E8E8E8;
+          stroke: none;
+          stroke-width: 2px;
+          
+      }
+      svg{
+          background-color: #aadaff;
+          float: center;
+      }
+
+      .historic{
+        fill: #fff2af;
+        
+        stroke:none;
+      }
+
+      .street{
+          stroke:  #d5d8db;
+          
+          fill: none;
+      }
+      .legend_title{
+          font-size: 18px;
+          font-weight: bold;
+      }
+        </style>
+
+</head>
+<body>
+<h1> Dating San Fransico Through Trees </h1>
+<p> By looking at the age of trees, we are able to see which areas of San Fransico are older or more recently developed. </p>
+
+<svg height = 1100 width = 1100 id = hw1>
+</svg>
+
+<p>California Register Historic Districts data provided by <a href = https://data.sfgov.org/Geographic-Locations-and-Boundaries/California-Register-Historic-Districts/mvcp-4nfj > data.sfgov.org </a> </p>
+
+<script>
+
+const svg = d3.select("#hw1");
+const width = svg.attr("width");
+const height = svg.attr("height");
+
+const requestData = async function() {
+
+
+    const map = await d3.json("SF-Neighborhoods.geo.json")
+    const histMap = await d3.json("California_Register_Historic_Districts.geo.json");
+    // data set source: https://data.sfgov.org/Geographic-Locations-and-Boundaries/California-Register-Historic-Districts/mvcp-4nfj
+    let streetMap = await d3.json("Streets_Active_and_Retired.geo.json");
+
+    streetMap.features = streetMap.features.filter( (d) => {return (d.properties.active == "true" /*&& d.properties.accepted == "true"*/ );});
+    //data set source: https://data.sfgov.org/Geographic-Locations-and-Boundaries/Streets-Active-and-Retired/3psu-pn9h
+
+    let treeData = await d3.csv("Street_Tree_List-2020-08-20_FILTERED.csv", d3.autoType)
+//creating map
+    var sanFran = topojson.feature(map, map.objects.SFNeighborhoods);
+    var mercProjection = d3.geoMercator()
+                            .fitSize([width, height], sanFran);
+    var path = d3.geoPath().projection(mercProjection);
+
+    svg.selectAll("path")
+        .data(sanFran.features)
+        .join("path")
+        .attr("d", path)
+        .attr("class", "city");
+
+    const overlay = svg.append('g')
+    const streets = svg.append('g')
+
+    
+
+
+
+    overlay.selectAll("path")
+        .data(histMap.features)
+        .join("path")
+        .attr("d", path)
+        .attr("class", "historic");
+    
+    streets.selectAll("path")
+        .data(streetMap.features)
+        .join("path")
+        .attr("d", path)
+        .attr("class", "street");
+
+    
+
+//adding trees
+
+    treeData = treeData.filter( (d) => { return (d.DBH < 300) ;});
+
+    let myDate = new Date(1954, 12, 1)
+
+    treeData.forEach( d => {
+        d.location = mercProjection([d.Longitude, d.Latitude])
+        // No plant date means planted before 1955
+        if(d.PlantDate == null){
+            d.PlantDate = new Date(1954, 12, 1);
+        }
+        d.Date = new Date(d.PlantDate);
+
+    });
+
+    var rExtent = d3.extent(treeData, d => d.DBH);
+    var dateExtent = d3.extent(treeData, d => d.Date);
+
+   
+
+    let rScale = d3.scaleLinear()
+                    .domain(rExtent)
+                    .range([1.5, 6]);
+
+    let colorScale = d3.scaleSequential(d3.interpolatePiYG)
+                        .domain([dateExtent[1].getUTCFullYear(), dateExtent[0].getUTCFullYear()]);
+
+  
+    svg.selectAll("circle")
+        .data(treeData)
+        .join("circle")
+        //.attr("r", d => rScale(d.DBH))
+        .attr("r", 2.5)
+        .attr("opacity", .7)
+        .attr("fill", d => colorScale(d.Date.getUTCFullYear()))
+        .attr("cx", d => d.location[0])
+        .attr("cy", d => d.location[1]);
+
+
+
+    //Legend
+    svg.append("rect")
+            .attr("x", 5)
+            .attr('y', 5)
+            .attr("width", 470)
+            .attr("height", 185)
+            .attr("fill", "white")
+    
+    svg.append("text")
+            .text("Legend")
+            .attr("x", 15)
+            .attr("y", 25)
+            .attr("class", "legend_title");
+    
+
+
+    let legendScale = d3.scaleLinear()
+        .domain([1955, 2020])
+        .range([50, 420]);
+
+      svg.append("text")
+        .text("Plant Date")
+        .attr('x', 200)
+        .attr('y', 55);
+    
+
+    
+      for (i = 1950; i <= 2020; i += .5) {
+        svg.append("rect")
+          .attr("x", legendScale(i) + 10)
+          .attr('y', 90)
+          .attr('height', 30)
+          .attr("width", 4)
+          .attr("fill", colorScale(i));
+        if (i % 10 == 5) {
+          svg.append("text")
+            .text(String(i))
+            .attr('x', legendScale(i))
+            .attr('y', 85);
+        }
+      }
+
+    svg.append("text")
+            .text("<")
+            .attr("x", 40)
+            .attr("y", 84)
+      
+    svg.append("rect")
+            .attr("x", 32)
+            .attr('y', 140)
+            .attr("width", 30)
+            .attr("height", 30)
+            .attr("fill", "#fff2af")
+
+    svg.append("text")
+            .text("California Register Historic District")
+            .attr("x", 70)
+            .attr("y", 160)
+};
+
+requestData();
+   
+
+</script>
+
+</body>
+</html>
