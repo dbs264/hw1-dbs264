@@ -47,15 +47,16 @@
 
 </head>
 <body>
-<h1> Dating San Fransico Through Trees </h1>
+<h1> Dating San Francisco Through Trees </h1>
 <div id = blurb>
-<p > By looking at the age of trees, we are able to identify which areas of San Fransico are older or more recently developed. 
+<p > By looking at the age of trees, we are able to identify which areas of San Francisco are older or more recently developed. 
   Viewing the trees in or around areas that are, or are eligible to be, California Register Historic Districts shows that older trees often are in fact more predominant around these areas.</p>
 </div>
 <svg height = 1100 width = 1100 id = hw1>
 </svg>
 
 <p>California Register Historic Districts data provided by <a href = https://data.sfgov.org/Geographic-Locations-and-Boundaries/California-Register-Historic-Districts/mvcp-4nfj > data.sfgov.org </a> </p>
+<p>Street map data provided by <a href = https://data.sfgov.org/Geographic-Locations-and-Boundaries/Streets-Active-and-Retired/3psu-pn9h > data.sfgov.org </a> </p>
 
 <script>
 
@@ -110,7 +111,7 @@ const requestData = async function() {
 
 //adding trees
 
-    treeData = treeData.filter( (d) => { return (d.DBH < 300) ;});
+  
 
     let myDate = new Date(1954, 12, 1)
 
@@ -140,7 +141,6 @@ const requestData = async function() {
     svg.selectAll("circle")
         .data(treeData)
         .join("circle")
-        //.attr("r", d => rScale(d.DBH))
         .attr("r", 2.5)
         .attr("opacity", .7)
         .attr("fill", d => colorScale(d.Date.getUTCFullYear()))
@@ -153,8 +153,8 @@ const requestData = async function() {
     svg.append("rect")
             .attr("x", 5)
             .attr('y', 5)
-            .attr("width", 470)
-            .attr("height", 185)
+            .attr("width", 460)
+            .attr("height", 180)
             .attr("fill", "white")
     
     svg.append("text")
@@ -170,16 +170,16 @@ const requestData = async function() {
         .range([50, 420]);
 
       svg.append("text")
-        .text("Plant Date")
-        .attr('x', 200)
-        .attr('y', 55);
+        .text("Date Planted")
+        .attr('x', 195)
+        .attr('y', 50);
     
 
     
       for (i = 1950; i <= 2020; i += .5) {
         svg.append("rect")
           .attr("x", legendScale(i) + 10)
-          .attr('y', 90)
+          .attr('y', 80)
           .attr('height', 30)
           .attr("width", 4)
           .attr("fill", colorScale(i));
@@ -187,26 +187,38 @@ const requestData = async function() {
           svg.append("text")
             .text(String(i))
             .attr('x', legendScale(i))
-            .attr('y', 85);
+            .attr('y', 75);
         }
       }
 
     svg.append("text")
             .text("<")
             .attr("x", 40)
-            .attr("y", 84)
+            .attr("y", 74)
       
     svg.append("rect")
-            .attr("x", 32)
-            .attr('y', 140)
+            .attr("x", 230)
+            .attr('y', 135)
             .attr("width", 30)
             .attr("height", 30)
             .attr("fill", "#fff2af")
 
     svg.append("text")
-            .text("California Register Historic District")
-            .attr("x", 70)
-            .attr("y", 160)
+            .text("Historic District")
+            .attr("x", 270)
+            .attr("y", 155)
+    
+    svg.append("circle")
+        .attr("r", 2.5)
+        .attr("cx", 35)
+        .attr("cy", 150)
+        .attr("fill", "black")
+        .attr("stroke", "black")
+      
+    svg.append("text")
+            .text("One Tree")
+            .attr("x", 45)
+            .attr("y", 155)
 };
 
 requestData();
